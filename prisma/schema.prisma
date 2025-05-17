@@ -1,0 +1,36 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  name               String?
+  email              String?           @unique
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now())
+  oauthCredentials   OauthCredentials?
+  oauthCredentialsId String?           @unique @db.ObjectId
+}
+
+model OauthCredentials {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  userIdFromProvider String    @unique
+  provider           Provider
+  accessToken        String
+  refreshToken       String?
+  expiresAt          DateTime?
+  scope              String[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now())
+  user               User      @relation(fields: [userId], references: [id])
+  userId             String    @unique @db.ObjectId
+}
+
+enum Provider {
+  FACEBOOK
+}

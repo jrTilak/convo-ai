@@ -1,0 +1,47 @@
+{
+  "name": "convo-ai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:gen": "prisma generate",
+    "db:push": "prisma db push",
+    "db": "prisma generate && prisma db push"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.9.0",
+  "dependencies": {
+    "@prisma/client": "6.8.2",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
+    "passport-jwt": "^4.0.1",
+    "prisma": "^6.8.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.15.18",
+    "@types/passport": "^1.0.17",
+    "@types/passport-facebook": "^3.0.3",
+    "@types/passport-jwt": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "eslint": "^9.26.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.4"
+  }
+}
