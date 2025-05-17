@@ -8,7 +8,8 @@ import { Strategy as FacebookStrategy, Profile } from "passport-facebook";
 import { config } from "dotenv";
 import { db } from "@/lib/prisma";
 import { fb } from "@/lib/fb";
-import { log } from "@/lib/log"; // <-- Add this import
+import { log } from "@/lib/log";
+import axios from "axios";
 
 config();
 
@@ -63,7 +64,7 @@ passport.use(
       }
 
       const longLikedTokens = await fb.getLongLivedToken(accessToken);
-
+      console.log("longLikedTokens", longLikedTokens);
       if (!longLikedTokens) {
         log.error("Failed to get long-lived Facebook token", { accessToken });
         return done(null, false);
@@ -83,7 +84,7 @@ passport.use(
                 refreshToken: "",
                 updatedAt: new Date(),
                 expiresAt: new Date(
-                  Date.now() + longLikedTokens.expiresIn * 1000
+                  Date.now() + (longLikedTokens.expiresIn || 0) * 1000
                 ),
               },
             },
@@ -109,7 +110,7 @@ passport.use(
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 expiresAt: new Date(
-                  Date.now() + longLikedTokens.expiresIn * 1000
+                  Date.now() + (longLikedTokens.expiresIn || 0) * 1000
                 ),
               },
             },
@@ -137,6 +138,55 @@ passport.use(
         // update the oauthCredentials
 
         log.info("User upserted via Facebook", { user });
+
+        const facebookPages = await fb.getFacebookPages(
+          longLikedTokens.accessToken
+        );
+
+        await Promise.all(
+          facebookPages.map(async (page) => {
+            const pageFromDb = await db.facebookPage.upsert({
+              where: {
+                idFromProvider: page.idFromProvider,
+              },
+              update: {
+                name: page.name,
+                accessToken: page.accessToken,
+                updatedAt: new Date(),
+                categories: [page.category],
+              },
+              create: {
+                name: page.name,
+                accessToken: page.accessToken,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                categories: [page.category],
+                idFromProvider: page.idFromProvider,
+                user: {
+                  connect: {
+                    id: user.id,
+                  },
+                },
+              },
+            });
+
+            // subscribe to webhook
+            const webhookSubscription = await fb.subscribePageToWebhook(
+              pageFromDb.idFromProvider,
+              pageFromDb.accessToken
+            );
+
+            if (!webhookSubscription) {
+              log.error("Failed to subscribe page to webhook", {
+                page: pageFromDb,
+              });
+            } else {
+              log.info("Subscribed page to webhook", {
+                page: pageFromDb,
+              });
+            }
+          })
+        );
 
         return done(null, user);
       } catch (error) {
