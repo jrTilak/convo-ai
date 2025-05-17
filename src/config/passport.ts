@@ -23,19 +23,19 @@ type JWTPayload = {
 };
 
 passport.use(
-  new JwtStrategy(opts, (payload: JWTPayload, done) => {
-    log.info("JWT strategy invoked", { payload }); // <-- Add log
-    const user = db.user.findUnique({
+  new JwtStrategy(opts, async (payload: JWTPayload, done) => {
+    log.info("JWT strategy invoked", { payload });
+    const user = await db.user.findUnique({
       where: {
         id: payload.id,
         email: payload.email,
       },
     });
     if (user) {
-      log.info("User found for JWT", { user }); // <-- Add log
+      log.info("User found for JWT", { user });
       return done(null, user);
     }
-    log.warn("No user found for JWT", { payload }); // <-- Add log
+    log.warn("No user found for JWT", { payload });
     return done(null, false);
   })
 );
@@ -116,6 +116,7 @@ passport.use(
           },
           select: {
             id: true,
+            email: true,
             oauthCredentials: {
               select: {
                 id: true,

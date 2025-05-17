@@ -9,7 +9,9 @@ const app = express();
 
 // logs a message to the console when a request is made to the server
 app.use((req, _res, next) => {
-  console.log(`Request made to ${req.url}`);
+  console.log(
+    `Request made to ${req.url}, ${req.method}, Bearer token: ${req.headers.authorization}`
+  );
   next();
 });
 

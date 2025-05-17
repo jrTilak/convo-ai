@@ -10,7 +10,7 @@ if (!fs.existsSync(logsDir)) {
 
 // Get current date for log filename
 const currentDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-const logFilePath = path.join(logsDir, `scraper-${currentDate}.log`);
+const logFilePath = path.join(logsDir, `logs-${currentDate}.log`);
 
 // Helper to format multiple arguments
 function formatArgs(args: unknown[]): string {

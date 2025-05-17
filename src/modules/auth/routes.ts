@@ -1,6 +1,7 @@
 import { Router } from "express";
 import passport from "@/config/passport";
 import jwt from "jsonwebtoken";
+import { protect } from "@/middleware/auth";
 
 const auth = Router();
 
@@ -17,18 +18,36 @@ auth.get(
   })
 );
 
-// GET /auth/facebook/callback — handle Facebook response
 auth.get(
   "/facebook/callback",
   passport.authenticate("facebook", { session: false, failureRedirect: "/" }),
   (req, res) => {
-    // @ts-ignore
-    const user = req.user;
+    const user = req.user as {
+      id: string;
+      email: string;
+    };
 
-    console.log(user);
+    if (!user) {
+      res.status(401).json({
+        message: "Unauthorized",
+      });
+    } else {
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        String(process.env.JWT_SECRET),
+        { expiresIn: "1m" }
+      );
 
-    res.json({ user });
+      res.json({
+        message: "Login successful",
+        bearer: token,
+      });
+    }
   }
 );
+
+auth.get("/me", protect(), (req, res) => {
+  res.json(req.user);
+});
 
 export { auth };
