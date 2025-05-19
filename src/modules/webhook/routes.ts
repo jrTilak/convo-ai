@@ -1,3 +1,4 @@
+import { ai } from "@/lib/ai";
 import { fb } from "@/lib/fb";
 import { db } from "@/lib/prisma";
 import { Router } from "express";
@@ -28,23 +29,68 @@ webhook.post("/", async (req, res) => {
       const senderId = event.sender.id;
       const messageText = event.message?.text;
 
-      const pageAccessToken = await db.facebookPage.findFirst({
+      const page = await db.facebookPage.findFirst({
         where: {
           idFromProvider: String(entry.id),
         },
       });
 
-      if (!pageAccessToken) {
-        console.log("pageAccessToken not found");
+      if (!page) {
+        console.log("page not found");
         return;
       }
 
       if (messageText) {
         console.log(`📩 Message from ${senderId}: ${messageText}`);
 
-        const response = `Thanks for your message: "${messageText}"`;
+        const chats = await db.chat.findMany({
+          where: {
+            facebookPageId: page.id,
+          },
+          orderBy: {
+            createdAt: "desc", // last created first
+          },
+        });
 
-        await fb.sendMessage(senderId, response, pageAccessToken?.accessToken);
+        const prompt = `
+        You are an AI assistant for a Facebook page ${page.name}. Do not disclose that you are an ai assistant. Take the role of ${page.name} and answer the user's message. Make the tone as natural and friendly as possible. The page is ${page.categories[0]}. 
+The user name is ${event.sender.name}.
+
+        `;
+
+        const reply = await ai.chat(
+          chats.map((chat) => ({
+            role:
+              chat.from === "USER" ? ("user" as const) : ("assistant" as const),
+            content: chat.message,
+            refusal: null,
+          })),
+          prompt
+        );
+
+        if (!reply) {
+          console.log("no reply");
+          return;
+        }
+
+        await fb.sendMessage(senderId, reply, page?.accessToken);
+
+        // save chat
+        await db.chat.create({
+          data: {
+            from: "USER",
+            message: messageText,
+            facebookPageId: String(entry.id),
+          },
+        });
+
+        await db.chat.create({
+          data: {
+            from: "FACEBOOK_PAGE",
+            message: reply,
+            facebookPageId: String(entry.id),
+          },
+        });
       }
     });
 

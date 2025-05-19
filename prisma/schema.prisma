@@ -42,8 +42,24 @@ model FacebookPage {
   userId         String   @unique @db.ObjectId
   categories     String[]
   idFromProvider String   @unique
+  chats          Chat[]
 }
 
 enum Provider {
   FACEBOOK
+}
+
+enum ChatFrom {
+  USER
+  FACEBOOK_PAGE
+}
+
+model Chat {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  message        String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now())
+  facebookPage   FacebookPage @relation(fields: [facebookPageId], references: [id])
+  facebookPageId String       @unique @db.ObjectId
+  from           ChatFrom
 }
