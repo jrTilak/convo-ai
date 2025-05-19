@@ -60,6 +60,6 @@ model Chat {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @default(now())
   facebookPage   FacebookPage @relation(fields: [facebookPageId], references: [id])
-  facebookPageId String       @unique @db.ObjectId
+  facebookPageId String       @db.ObjectId
   from           ChatFrom
 }

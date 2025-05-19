@@ -14,15 +14,19 @@ class AI {
     prompt: string
   ) {
     try {
+      const refined = [
+        {
+          role: "system",
+          content: prompt,
+        },
+        ...messages,
+      ] as OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+
+      console.log(refined);
+
       const response = await this._client.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: prompt,
-          },
-          ...messages,
-        ],
+        model: "gpt-4-turbo",
+        messages: refined,
       });
 
       return response.choices[0].message.content;
